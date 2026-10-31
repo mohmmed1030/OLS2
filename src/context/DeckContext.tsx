@@ -232,7 +232,8 @@ export const DeckProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [folders, setFolders] = useState<Folder[]>(() => {
     try {
       const saved = safeStorage.getItem('omega_folders');
-      return saved ? JSON.parse(saved) : INITIAL_FOLDERS;
+      const parsed = saved ? JSON.parse(saved) : null;
+      return Array.isArray(parsed) ? parsed : INITIAL_FOLDERS;
     } catch {
       return INITIAL_FOLDERS;
     }
@@ -241,7 +242,13 @@ export const DeckProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [decks, setDecks] = useState<Deck[]>(() => {
     try {
       const saved = safeStorage.getItem('omega_decks');
-      return saved ? JSON.parse(saved) : INITIAL_DECKS;
+      const parsed = saved ? JSON.parse(saved) : null;
+      return Array.isArray(parsed)
+        ? parsed.map((d: any) => ({
+            ...d,
+            cards: Array.isArray(d?.cards) ? d.cards : [],
+          }))
+        : INITIAL_DECKS;
     } catch {
       return INITIAL_DECKS;
     }
@@ -250,7 +257,8 @@ export const DeckProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [trash, setTrash] = useState<TrashItem[]>(() => {
     try {
       const saved = safeStorage.getItem('omega_trash');
-      return saved ? JSON.parse(saved) : [];
+      const parsed = saved ? JSON.parse(saved) : null;
+      return Array.isArray(parsed) ? parsed : [];
     } catch {
       return [];
     }
@@ -259,7 +267,8 @@ export const DeckProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [testScores, setTestScores] = useState<TestScoreRecord[]>(() => {
     try {
       const saved = safeStorage.getItem('omega_test_scores');
-      return saved ? JSON.parse(saved) : INITIAL_TEST_SCORES;
+      const parsed = saved ? JSON.parse(saved) : null;
+      return Array.isArray(parsed) ? parsed : INITIAL_TEST_SCORES;
     } catch {
       return INITIAL_TEST_SCORES;
     }
@@ -317,25 +326,28 @@ export const DeckProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const now = Date.now();
 
-    decks.forEach((deck) => {
-      totalCards += deck.cards.length;
-      deck.cards.forEach((card) => {
-        cardCorrect += card.correctCount || 0;
-        cardErrors += card.incorrectCount || 0;
-        if (!card.nextReviewDate || card.nextReviewDate <= now) {
+    const safeDecks = Array.isArray(decks) ? decks : [];
+    safeDecks.forEach((deck) => {
+      const cards = Array.isArray(deck?.cards) ? deck.cards : [];
+      totalCards += cards.length;
+      cards.forEach((card) => {
+        cardCorrect += card?.correctCount || 0;
+        cardErrors += card?.incorrectCount || 0;
+        if (!card?.nextReviewDate || card.nextReviewDate <= now) {
           cardsDueForReview += 1;
         }
       });
     });
 
-    const testCorrect = testScores.reduce((acc, t) => acc + t.correctCount, 0);
-    const testErrors = testScores.reduce((acc, t) => acc + t.incorrectCount, 0);
+    const safeScores = Array.isArray(testScores) ? testScores : [];
+    const testCorrect = safeScores.reduce((acc, t) => acc + (t?.correctCount || 0), 0);
+    const testErrors = safeScores.reduce((acc, t) => acc + (t?.incorrectCount || 0), 0);
 
     const totalCorrect = cardCorrect + testCorrect;
     const totalErrors = cardErrors + testErrors;
     const totalCardsAnswered = totalCorrect + totalErrors;
 
-    const manualCreatedFilesCount = decks.length;
+    const manualCreatedFilesCount = safeDecks.length;
 
     // Calculate improvement rate:
     let improvementRate = 0;

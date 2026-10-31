@@ -178,11 +178,13 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [palette, setPaletteState] = useState<PaletteId>(() => {
-    return (safeStorage.getItem('omega_palette') as PaletteId) || 'indigo';
+    const saved = safeStorage.getItem('omega_palette') as PaletteId;
+    return saved && THEME_TOKENS[saved] ? saved : 'indigo';
   });
 
   const [mode, setModeState] = useState<ThemeMode>(() => {
-    return (safeStorage.getItem('omega_mode') as ThemeMode) || 'dark';
+    const saved = safeStorage.getItem('omega_mode') as ThemeMode;
+    return saved === 'light' || saved === 'dark' ? saved : 'dark';
   });
 
   const [backgroundPattern, setBackgroundPatternState] = useState<BackgroundPatternId>(() => {
@@ -204,13 +206,15 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   });
 
   const setPalette = (newPalette: PaletteId) => {
-    setPaletteState(newPalette);
-    safeStorage.setItem('omega_palette', newPalette);
+    const validPalette = THEME_TOKENS[newPalette] ? newPalette : 'indigo';
+    setPaletteState(validPalette);
+    safeStorage.setItem('omega_palette', validPalette);
   };
 
   const setMode = (newMode: ThemeMode) => {
-    setModeState(newMode);
-    safeStorage.setItem('omega_mode', newMode);
+    const validMode = newMode === 'light' ? 'light' : 'dark';
+    setModeState(validMode);
+    safeStorage.setItem('omega_mode', validMode);
   };
 
   const toggleMode = () => {
@@ -256,18 +260,24 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     root.setAttribute('data-palette', palette);
     root.setAttribute('data-mode', mode);
 
-    // Apply tokens directly to CSS variables
-    const tokens = THEME_TOKENS[palette]?.[mode] || THEME_TOKENS.indigo[mode];
-    root.style.setProperty('--bg-canvas', tokens.bgCanvas);
-    root.style.setProperty('--bg-surface', tokens.bgSurface);
-    root.style.setProperty('--bg-card', tokens.bgCard);
-    root.style.setProperty('--color-primary', tokens.colorPrimary);
-    root.style.setProperty('--color-primary-hover', tokens.colorPrimaryHover);
-    root.style.setProperty('--color-primary-light', tokens.colorPrimaryLight);
-    root.style.setProperty('--color-text-main', tokens.colorTextMain);
-    root.style.setProperty('--color-text-muted', tokens.colorTextMuted);
-    root.style.setProperty('--color-border', tokens.colorBorder);
-    root.style.setProperty('--color-border-subtle', tokens.colorBorderSubtle);
+    // Apply tokens directly to CSS variables with absolute fallback
+    const tokens =
+      THEME_TOKENS[palette]?.[mode] ||
+      THEME_TOKENS.indigo[mode] ||
+      THEME_TOKENS.indigo.dark;
+
+    if (tokens) {
+      root.style.setProperty('--bg-canvas', tokens.bgCanvas);
+      root.style.setProperty('--bg-surface', tokens.bgSurface);
+      root.style.setProperty('--bg-card', tokens.bgCard);
+      root.style.setProperty('--color-primary', tokens.colorPrimary);
+      root.style.setProperty('--color-primary-hover', tokens.colorPrimaryHover);
+      root.style.setProperty('--color-primary-light', tokens.colorPrimaryLight);
+      root.style.setProperty('--color-text-main', tokens.colorTextMain);
+      root.style.setProperty('--color-text-muted', tokens.colorTextMuted);
+      root.style.setProperty('--color-border', tokens.colorBorder);
+      root.style.setProperty('--color-border-subtle', tokens.colorBorderSubtle);
+    }
   }, [palette, mode]);
 
   return (
