@@ -1,0 +1,6 @@
+{
+  "name": "OMEGA LEARNING SYSTEM",
+  "description": "High-end adaptive learning system featuring modular mastery paths, spaced repetition flashcards, and progressive knowledge architecture.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

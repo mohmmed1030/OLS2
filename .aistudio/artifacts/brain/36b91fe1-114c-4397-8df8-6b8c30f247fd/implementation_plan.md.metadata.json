@@ -1,0 +1,6 @@
+{
+  "summary":  "Implementation plan for Anki-style CSV and delimited plain text flashcard conversion with auto/manual delimiters, flexible destination deck placement, and single-flight API request optimization to prevent redundant or repeated calls.",
+  "updatedAt":  "2026-10-31T11:03:33.929003749Z",
+  "requestFeedback":  true,
+  "userFacing":  true
+}
